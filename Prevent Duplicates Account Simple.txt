@@ -1,0 +1,15 @@
+trigger PreventDublicates on Account (before insert, before update) {
+
+ for(Account a:Trigger.new)
+ {
+          
+List<Account> acc= ([Select Id,Name from Account where Name=:a.Name and Rating=:a.Rating]);
+  
+System.debug(acc);
+ if(acc.size()>0)
+ {
+a.addError('You Cannot Create the Duplicate Account');
+
+ } 
+ }
+ }

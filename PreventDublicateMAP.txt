@@ -1,0 +1,28 @@
+trigger kotbre on Account (before insert,before Update) {
+    
+     
+    Map<String, Account> accMap = new Map<String, Account>();
+     
+    for (Account acc : System.Trigger.new) {
+         
+        //Make sure we don't treat account Name that isn't changing during an update as a duplicate.  
+        if (System.Trigger.isInsert || (acc.Name != System.Trigger.oldMap.get(acc.Id).Name)) {
+             
+            //Make sure another new account isn't also a duplicate  
+            if (accMap.containsKey(acc.Name)) {
+                acc.Name.addError('Another account has the ' + acc.Name + ' same name.');
+            } else {
+                accMap.put(acc.Name, acc);
+            }
+        }
+    }
+     
+    //Query to find all the Accounts in the database that have the same name as any of the Accounts being inserted or updated.  
+    for (Account acc : [SELECT Name FROM Account
+                        WHERE Name IN :accMap.KeySet()]) {
+                            Account newAcc = accMap.get(acc.Name);
+                            newAcc.Name.addError('An account with this name ' + acc.Name + ' already exists.');
+                        }
+
+ 
+}
