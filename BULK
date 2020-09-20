@@ -1,0 +1,39 @@
+trigger LeadTrigger on Lead (before insert, before update) {
+
+LeadHandler handler = new LeadHandler();
+if (Trigger.isBefore) {
+if (Trigger.isInsert) {
+handler.onBeforeInsert(Trigger.new);
+}
+if (Trigger.IsUpdate) {
+// handler.onBeforeUpdate(Trigger.new, Trigger.Old);
+}
+// More event checks if needed
+}
+}
+
+Handler code:
+public class LeadHandler {
+Public void onBeforeInsert(List newLeadList) {
+Map emailLeadMap = new Map();
+for (Lead leadVar : newLeadList) {
+emailLeadMap.put(leadVar, leadVar.email);
+}
+checkDupes(emailLeadMap);
+}
+
+private void checkDupes(Map emailLeadMap) {
+Map emailContactMap = new Map();
+// Get all contacts with matching emails
+for (Contact contactVar : [SELECT Email FROM Contact WHERE Email IN :emailLeadMap.values()]) {
+// This map can be replaced by Set of emails as well :)
+emailContactMap.put(contactVar.email, contactVar);
+}
+// For every incoming Lead, check if contacts with matching emails were found
+for (Lead leadVar : emailLeadMap.keyset()) {
+if (emailContactMap.containskey(leadVar.email)) {
+leadVar.addError(‘ContactAlreadyExist’);
+}
+}
+}
+}
